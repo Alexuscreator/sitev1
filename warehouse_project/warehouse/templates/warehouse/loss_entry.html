@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Внесение данных по утратам</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin-top: 30px;
+            padding: 30px 15px;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .card {
+            padding: 25px 30px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .form-control, .form-select {
+            border-radius: 12px;
+            padding: 12px 15px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            background-color: #f8f9fa;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            width: 100%;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+            background-color: #ffffff;
+        }
+
+        .btn-custom {
+            background-color: #28a745;
+            color: white;
+            font-size: 16px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            background-color: #218838;
+        }
+
+        .alert {
+            margin-top: 20px;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .text-danger {
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .mb-3 {
+            margin-bottom: 20px;
+        }
+
+        .btn-secondary {
+            margin-top: 20px;
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+
+            .form-label {
+                font-size: 14px;
+            }
+
+            .form-control {
+                font-size: 14px;
+            }
+
+            .btn-custom {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Навигационная панель -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'data_by_date' %}">Макрорегион Москва</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'loss_list' %}">Список утрат</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/">Заполняем данные</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'dynamics_view' %}">Динамика</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <a href="{% url 'loss_list' %}" class="btn btn-secondary mt-3">Список утрат</a>
+        <h2>Внесение данных по утратам отправлений</h2>
+        <div class="card">
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Ошибка!</strong> Пожалуйста, исправьте ошибки в форме.
+                    </div>
+                {% endif %}
+
+                <!-- Склад -->
+                <div class="form-group mb-3">
+                    <label for="warehouse" class="form-label">Название склада</label>
+                    {{ form.warehouse }}
+                    {% if form.warehouse.errors %}
+                        <div class="text-danger">
+                            {% for error in form.warehouse.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- RP -->
+                <div class="form-group mb-3">
+                    <label for="rp" class="form-label">RP</label>
+                    {{ form.rp }}
+                    {% if form.rp.errors %}
+                        <div class="text-danger">
+                            {% for error in form.rp.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- ОС -->
+                <div class="form-group mb-3">
+                    <label for="os" class="form-label">ОС</label>
+                    {{ form.os }}
+                    {% if form.os.errors %}
+                        <div class="text-danger">
+                            {% for error in form.os.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Вложение -->
+                <div class="form-group mb-3">
+                    <label for="content" class="form-label">Вложение</label>
+                    <textarea name="attachment" id="attachment" class="form-control" rows="4">{{ form.content.value }}</textarea>
+                    {% if form.content.errors %}
+                        <div class="text-danger">
+                            {% for error in form.content.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Дата подачи запроса -->
+                <div class="form-group mb-3">
+                    <label for="request_date" class="form-label">Дата подачи запроса</label>
+                    <input type="date" name="request_date" id="request_date" class="form-control" value="{{ form.request_date.value|default:'' }}">
+                    {% if form.request_date.errors %}
+                        <div class="text-danger">
+                            {% for error in form.request_date.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Дата последнего действия -->
+                <div class="form-group mb-3">
+                    <label for="last_action_date" class="form-label">Дата последнего действия/импорта</label>
+                    <input type="date" name="last_action_date" id="last_action_date" class="form-control" value="{{ form.last_action_date.value|default:'' }}">
+                    {% if form.last_action_date.errors %}
+                        <div class="text-danger">
+                            {% for error in form.last_action_date.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Тип утраты -->
+                <div class="form-group mb-3">
+                    <label for="loss_type" class="form-label">Тип утраты</label>
+                    {{ form.loss_type }}
+                    {% if form.loss_type.errors %}
+                        <div class="text-danger">
+                            {% for error in form.loss_type.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Статус запроса -->
+                <div class="form-group mb-3">
+                    <label for="request_status" class="form-label">Статус запроса</label>
+                    {{ form.request_status }}
+                    {% if form.request_status.errors %}
+                        <div class="text-danger">
+                            {% for error in form.request_status.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Удержано -->
+                <div class="form-group mb-3">
+                    <label for="retained" class="form-label">Удержано</label>
+                    <select name="retained" id="retained" class="form-select">
+                        <option value="yes" {% if form.retained.value == 'yes' %}selected{% endif %}>Да</option>
+                        <option value="no" {% if form.retained.value == 'no' %}selected{% endif %}>Нет</option>
+                    </select>
+                    {% if form.retained.errors %}
+                        <div class="text-danger">
+                            {% for error in form.retained.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Комментарий -->
+                <div class="form-group mb-3">
+                    <label for="comment" class="form-label">Комментарий</label>
+                    {{ form.comment }}
+                    {% if form.comment.errors %}
+                        <div class="text-danger">
+                            {% for error in form.comment.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-custom">Сохранить</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

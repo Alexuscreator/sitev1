@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Динамика</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Стили для навигационной панели */
+        .navbar {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-weight: bold;
+        }
+
+        .date-input {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .btn-custom {
+            background-color: #28a745; /* Зеленый цвет */
+            color: white;
+            font-size: 16px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        .btn-custom:hover {
+            background-color: #218838; /* Темный зеленый при наведении */
+        }
+
+        .container {
+            max-width: 100%;
+        }
+
+        .card {
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .table th, .table td {
+            text-align: center;
+        }
+
+        /* Стили для таблиц */
+        .table-bordered {
+            border: 1px solid #ddd;
+        }
+
+        .table th, .table td {
+            padding: 8px;
+            text-align: center;
+        }
+
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            .form-label {
+                font-size: 14px;
+            }
+            .btn-custom {
+                font-size: 14px;
+            }
+        }
+
+    </style>
+
+    <script>
+        function toggleForm() {
+            var comparisonType = document.querySelector('input[name="comparison_type"]:checked').value;
+            if (comparisonType === 'days') {
+                document.getElementById('day_comparison').style.display = 'block';
+            }
+        }
+
+        window.onload = function () {
+            toggleForm();
+        };
+    </script>
+</head>
+
+<body>
+    <!-- Навигационная панель -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'data_by_date' %}">Макрорегион Москва</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'loss_list' %}">Список утрат</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/">Заполняем данные</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'dynamics_view' %}">Динамика</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2 class="text-center">Сравнение показателей за два дня</h2>
+
+        <div class="card">
+            <form method="post">
+                {% csrf_token %}
+
+                <div id="day_comparison">
+                    <label class="form-label">Выбираем дни для сравнения</label><br>
+                    <input type="date" name="date1" class="form-control date-input" required>
+                    <input type="date" name="date2" class="form-control date-input" required>
+                </div>
+
+                <br>
+                <button type="submit" class="btn btn-custom">Жмак сюда</button>
+            </form>
+        </div>
+
+        {% if data %}
+        <h3 class="mt-4">Результаты для {{ date1 }} и {{ date2 }}</h3>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr class="text-center">
+                    <th>Склад</th>
+                    <th colspan="2">Выдано</th>
+                    <th colspan="2">Обработано</th>
+                </tr>
+                <tr class="text-center">
+                    <th></th>
+                    <th>{{ date1 }}</th>
+                    <th>{{ date2 }}</th>
+                    <th>{{ date1 }}</th>
+                    <th>{{ date2 }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr class="text-center">
+                    <td>{{ row.warehouse.name }}</td>
+                    <td>{{ row.total_issued_day1 }}</td>
+                    <td>{{ row.total_issued_day2 }}</td>
+                    <td>{{ row.total_processed_day1 }}</td>
+                    <td>{{ row.total_processed_day2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="text-center">
+                    <th>Итого</th>
+                    <th>{{ total_issued_day1 }}</th>
+                    <th>{{ total_issued_day2 }}</th>
+                    <th>{{ total_processed_day1 }}</th>
+                    <th>{{ total_processed_day2 }}</th>
+                </tr>
+            </tfoot>
+        </table>
+
+        <h3>Изменения в процентах:</h3>
+        <table class="table table-bordered">
+            <thead>
+                <tr class="text-center">
+                    <th>Склад</th>
+                    <th>Разница по выдано (%)</th>
+                    <th>Разница по обработано (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for change in changes_percentage %}
+                <tr class="text-center">
+                    <td>{{ change.warehouse.name }}</td>
+                    <td>
+                        {% if change.percentage_change_issued %}
+                            {{ change.percentage_change_issued|floatformat:2 }}%
+                        {% else %}
+                            Нет данных
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if change.percentage_change_processed %}
+                            {{ change.percentage_change_processed|floatformat:2 }}%
+                        {% else %}
+                            Нет данных
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        <a href="{% url 'interval_comparison_view' %}" class="btn btn-secondary mt-3">Перейти к сравнению по интервалам</a>
+        <a href="{% url 'data_by_date' %}" class="btn btn-secondary mt-3">Посмотреть день</a>
+    </div>
+
+</body>
+
+</html>

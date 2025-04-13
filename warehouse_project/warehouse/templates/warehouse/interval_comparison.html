@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сравнение по интервалам</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .form-label {
+            font-weight: bold;
+        }
+        .date-input {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .btn-custom {
+            background-color: #28a745; /* Зеленый цвет */
+            color: white;
+            font-size: 16px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            width: 100%;
+        }
+        .btn-custom:hover {
+            background-color: #218838; /* Темный зеленый при наведении */
+        }
+        .container {
+            max-width: 100%;
+        }
+        .card {
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .table th, .table td {
+            text-align: center;
+        }
+        .positive {
+            color: #00FF00; /* Ярко-зеленый */
+        }
+        .negative {
+            color: #FF0000; /* Ярко-красный */
+        }
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            .form-label {
+                font-size: 14px;
+            }
+            .btn-custom {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Навигационная панель -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'data_by_date' %}">Макрорегион Москва</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'loss_list' %}">Утраты</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/">Заполняем данные</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'dynamics_view' %}">Динамика</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2 class="text-center">Сравнение объема обработанного груза по интервалам</h2>
+
+        <div class="card">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="start_date1" class="form-label">Начало интервала 1:</label>
+                            <input type="date" name="start_date1" class="form-control date-input" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="end_date1" class="form-label">Конец интервала 1:</label>
+                            <input type="date" name="end_date1" class="form-control date-input" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="start_date2" class="form-label">Начало интервала 2:</label>
+                            <input type="date" name="start_date2" class="form-control date-input" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="end_date2" class="form-label">Конец интервала 2:</label>
+                            <input type="date" name="end_date2" class="form-control date-input" required>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-custom">Жмак сюда</button>
+            </form>
+        </div>
+
+        {% if aggregated_data %}
+            <h3 class="mt-4 text-center">Объем обработанного груза для выбранных интервалов:</h3>
+            <p>Интервал 1: {{ start_date1 }} - {{ end_date1 }}</p>
+            <p>Интервал 2: {{ start_date2 }} - {{ end_date2 }}</p>
+
+            <!-- Таблица с результатами для выбранных интервалов -->
+            <table class="table table-bordered mt-3">
+                <thead>
+                    <tr class="text-center">
+                        <th>Склад</th>
+                        <th>Обработано {{ start_date1 }} - {{ end_date1 }}</th>
+                        <th>Выдано {{ start_date1 }} - {{ end_date1 }}</th>
+                        <th>Обработано {{ start_date2 }} - {{ end_date2 }}</th>
+                        <th>Выдано {{ start_date2 }} - {{ end_date2 }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in aggregated_data %}
+                    <tr class="text-center">
+                        <td>{{ row.warehouse_name }}</td>
+                        <td>{{ row.processed_interval1 }}</td>
+                        <td>{{ row.issued_interval1 }}</td>
+                        <td>{{ row.processed_interval2 }}</td>
+                        <td>{{ row.issued_interval2 }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="text-center font-weight-bold">
+                        <td><strong>Итог</strong></td>
+                        <td><strong>{{ total_processed_interval1 }}</strong></td>
+                        <td><strong>{{ total_issued_interval1 }}</strong></td>
+                        <td><strong>{{ total_processed_interval2 }}</strong></td>
+                        <td><strong>{{ total_issued_interval2 }}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4 class="mt-4 text-center">Динамика в процентах объема обработанного и выданного груза для выбранных интервалов</h4>
+            <table class="table table-bordered mt-3">
+                <thead>
+                    <tr class="text-center">
+                        <th>Склад</th>
+                        <th>Разница по выданному (%)</th>
+                        <th>Разница по обработанному (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in aggregated_data %}
+                    <tr class="text-center">
+                        <td>{{ row.warehouse_name }}</td>
+                        <td class="{% if row.percentage_change_issued is not None and row.percentage_change_issued >= 0 %}positive{% elif row.percentage_change_issued is not None and row.percentage_change_issued < 0 %}negative{% endif %}">
+                            {% if row.percentage_change_issued is not None %}
+                                {{ row.percentage_change_issued|floatformat:2 }}%
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td class="{% if row.percentage_change_processed is not None and row.percentage_change_processed >= 0 %}positive{% elif row.percentage_change_processed is not None and row.percentage_change_processed < 0 %}negative{% endif %}">
+                            {% if row.percentage_change_processed is not None %}
+                                {{ row.percentage_change_processed|floatformat:2 }}%
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h4 class="mt-4 text-center">Складские утраты для выбранных интервалов</h4>
+            <table class="table table-bordered mt-3">
+                <thead>
+                    <tr class="text-center">
+                        <th rowspan="2">Склад</th>
+                        <th colspan="2">Интервал 1: {{ start_date1 }} - {{ end_date1 }}</th>
+                        <th colspan="2">Интервал 2: {{ start_date2 }} - {{ end_date2 }}</th>
+                    </tr>
+                    <tr class="text-center">
+                        <th>Количество складских утрат</th>
+                        <th>Общая стоимость складских утрат</th>
+                        <th>Количество складских утрат</th>
+                        <th>Общая стоимость складских утрат</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in loss_data %}
+                    <tr class="text-center">
+                        <td>{{ row.warehouse_name }}</td>
+                        <td>{{ row.warehouse_losses_count_interval1|default_if_none:"0" }}</td>
+                        <td>{{ row.warehouse_losses_cost_interval1|default_if_none:"0"|floatformat:0 }}</td>
+                        <td>{{ row.warehouse_losses_count_interval2|default_if_none:"0" }}</td>
+                        <td>{{ row.warehouse_losses_cost_interval2|default_if_none:"0"|floatformat:0 }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="text-center font-weight-bold">
+                        <td><strong>Итог</strong></td>
+                        <td><strong>{{ total_warehouse_losses_count_interval1 }}</strong></td>
+                        <td><strong>{{ total_warehouse_losses_cost_interval1|floatformat:0 }}</strong></td>
+                        <td><strong>{{ total_warehouse_losses_count_interval2 }}</strong></td>
+                        <td><strong>{{ total_warehouse_losses_cost_interval2|floatformat:0 }}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4 class="mt-4 text-center">Магистральные утраты для выбранных интервалов</h4>
+            <table class="table table-bordered mt-3">
+                <thead>
+                    <tr class="text-center">
+                        <th rowspan="2">Склад</th>
+                        <th colspan="2">Интервал 1: {{ start_date1 }} - {{ end_date1 }}</th>
+                        <th colspan="2">Интервал 2: {{ start_date2 }} - {{ end_date2 }}</th>
+                    </tr>
+                    <tr class="text-center">
+                        <th>Количество магистральных утрат</th>
+                        <th>Общая стоимость магистральных утрат</th>
+                        <th>Количество магистральных утрат</th>
+                        <th>Общая стоимость магистральных утрат</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in magistral_loss_data %}
+                    <tr class="text-center">
+                        <td>{{ row.warehouse_name }}</td>
+                        <td>{{ row.magistral_losses_count_interval1|default_if_none:"0" }}</td>
+                        <td>{{ row.magistral_losses_cost_interval1|default_if_none:"0"|floatformat:0 }}</td>
+                        <td>{{ row.magistral_losses_count_interval2|default_if_none:"0" }}</td>
+                        <td>{{ row.magistral_losses_cost_interval2|default_if_none:"0"|floatformat:0 }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="text-center font-weight-bold">
+                        <td><strong>Итог</strong></td>
+                        <td><strong>{{ total_magistral_losses_count_interval1 }}</strong></td>
+                        <td><strong>{{ total_magistral_losses_cost_interval1|floatformat:0 }}</strong></td>
+                        <td><strong>{{ total_magistral_losses_count_interval2 }}</strong></td>
+                        <td><strong>{{ total_magistral_losses_cost_interval2|floatformat:0 }}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <a href="{% url 'download_loss_data' %}?start_date1={{ start_date1 }}&end_date1={{ end_date1 }}&start_date2={{ start_date2 }}&end_date2={{ end_date2 }}" class="btn btn-primary mt-3">Скачать данные по утратам</a>
+        {% else %}
+            <p>Пожалуйста, выберите два интервала для сравнения.</p>
+        {% endif %}
+
+        <a href="{% url 'dynamics_view' %}" class="btn btn-secondary mt-3">Сравнить два дня</a>
+        <a href="{% url 'data_by_date' %}" class="btn btn-secondary mt-3">Посмотреть день</a>
+    </div>
+</body>
+
+</html>

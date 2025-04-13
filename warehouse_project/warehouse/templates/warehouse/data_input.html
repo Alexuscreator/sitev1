@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Данные</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .navbar { background-color: #333; }
+        .navbar-nav .nav-item .nav-link { color: #fff !important; }
+        .navbar-nav .nav-item:hover .nav-link { color: #ccc !important; }
+    </style>
+</head>
+<body>
+    <!-- Навигационная панель -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'data_by_date' %}">Макрорегион Москва</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'loss_list' %}">Список утрат</a></li>
+                    <li class="nav-item active"><a class="nav-link" href="{% url 'dynamics_view' %}">Динамика</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <a href="{% url 'interval_comparison_view' %}" class="btn btn-secondary mt-3">Перейти к сравнению по интервалам</a>
+        <a href="{% url 'dynamics_view' %}" class="btn btn-secondary mt-3">Сравнить два дня</a>
+        <h2>Заполнение данных по складам(выезд курьеров 14:00 + Меги 21:00)</h2>
+
+        <!-- Выводим ошибку, если дата не выбрана -->
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Поле для выбора даты -->
+            <div class="mb-3">
+                <label for="date" class="form-label">Дата</label>
+                <input type="date" class="form-control" name="date" id="date" required>
+            </div>
+
+            <!-- Таблица для ввода данных -->
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Склад</th>
+                        <th>Обработано</th>
+                        <th>Выдано</th>
+                        <th>Остаток</th>
+                        <th>Системные стопы</th>
+                        <th>Ожидает поступления</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for warehouse in warehouse_data %}
+                        <tr>
+                            <td>{{ warehouse.name }}</td>
+                            <td><input type="number" name="processed_{{ forloop.counter0 }}" class="form-control" value="0" /></td>
+                            <td><input type="number" name="issued_{{ forloop.counter0 }}" class="form-control" value="0" /></td>
+                            <td><input type="number" name="remaining_{{ forloop.counter0 }}" class="form-control" value="0" /></td>
+                            <td><input type="number" name="system_stops_{{ forloop.counter0 }}" class="form-control" value="0" /></td>
+                            <td><input type="number" name="awaiting_{{ forloop.counter0 }}" class="form-control" value="0" /></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <button type="submit" class="btn btn-primary">Сохранить данные</button>
+        </form>
+
+
+
+        <h3 class="mt-5">Ранее внесенные данные</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Склад</th>
+            <th>Обработано</th>
+            <th>Выдано</th>
+            <th>Остаток</th>
+            <th>Системные стопы</th>
+            <th>Остаток минус стопы</th>
+            <th>Ожидает поступления</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in records %}
+            <tr>
+                <td>{{ record.date|date:"d F Y" }}</td>
+                <td>{{ record.warehouse.name }}</td>
+                <td>{{ record.processed }}</td>
+                <td>{{ record.issued }}</td>
+                <td>{{ record.remaining }}</td>
+                <td>{{ record.system_stops }}</td>
+                <td>{{ record.remaining_minus_system_stops }}</td>
+                <td>{{ record.awaiting }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <td><strong>Итого:</strong></td>
+            <td></td>
+            <td><strong>{{ total_processed }}</strong></td>
+            <td><strong>{{ total_issued }}</strong></td>
+            <td><strong>{{ total_remaining }}</strong></td>
+            <td><strong>{{ total_system_stops }}</strong></td>
+            <td><strong>{{ total_remaining_minus_system_stops }}</strong></td>
+            <td><strong>{{ total_awaiting }}</strong></td>
+        </tr>
+    </tfoot>
+</table>
+</div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
